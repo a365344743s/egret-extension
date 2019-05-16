@@ -25,28 +25,36 @@ ts库
 
 ## 2. [Decimal](https://github.com/MikeMcl/decimal.js "Decimal")
 支持平台: ios、android、web
+
 大数库
+
 因为math库已经包含decimal代码，此处只有声明文件。有单独使用需求的可以去[这里](https://github.com/MikeMcl/decimal.js "这里")下载
 
 ## 3. [long](https://github.com/dcodeIO/long.js "long")
 支持平台: ios、android、web
+
 int64支持，主要用于protobuf
 
 ## 4. [math](https://github.com/josdejong/mathjs "math")
 支持平台: ios、android、web
+
 js数学库，我们用来进行大数计算
 
 ## 5. [pako](https://github.com/nodeca/pako "pako")
 支持平台: ios、android、web
+
 jszip压缩库，[UPNG](https://github.com/photopea/UPNG.js "UPNG")的依赖库
 
 ## 6. [protobuf](https://github.com/dcodeio/protobuf.js "protobuf")
 支持平台: ios、android、web
+
 protobuf js库
 
 ## 7. [UPNG](https://github.com/photopea/UPNG.js "UPNG")
 支持平台: ios、android、web
+
 PNG快速编解码库
+
 我们项目需要实时生成二维码，做法是
 1. 字符串转换为二维码点阵位图数据
 2. 通过UPNG把位图转换为png格式二进制数据
@@ -55,9 +63,12 @@ PNG快速编解码库
 
 ## 8. uuid
 支持平台: web
+
 uuid库
+
 ## 9. [qrcodegen](https://github.com/nayuki/QR-Code-generator "qrcodegen")
 支持平台: ios、android、web
+
 二维码生成库
 
 # - 构建插件
