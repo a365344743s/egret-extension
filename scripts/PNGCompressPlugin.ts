@@ -15,7 +15,7 @@ export class PNGCompressPlugin implements plugins.Command {
 				return path.extname(value) === '.png';
 			}));
 		});
-		let pngQuantPath = path.join(pluginContext.projectRoot, "pngquant", getPNGQuant());
+		let pngQuantPath = path.join(pluginContext.projectRoot, "cmd", "pngquant", getPNGQuant());
 		try {
 			utils.shell2Sync(pngQuantPath, ["--force", "--skip-if-larger", "--ext=.png", "--strip", "256"].concat(pngFiles));
 		} catch(e) {
