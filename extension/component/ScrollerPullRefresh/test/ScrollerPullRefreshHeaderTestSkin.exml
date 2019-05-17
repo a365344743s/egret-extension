@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<e:Skin class="ScrollerPullRefreshHeaderTestSkin" width="400" height="40" currentState="idle" xmlns:e="http://ns.egret.com/eui" states="idle,ready,working,success,failed" >
+	<e:Label text="" horizontalCenter="0" verticalCenter="0" text.idle="下拉刷新" text.ready="释放刷新" text.working="刷新中" text.success="刷新成功" text.failed="刷新失败"/>
+</e:Skin>

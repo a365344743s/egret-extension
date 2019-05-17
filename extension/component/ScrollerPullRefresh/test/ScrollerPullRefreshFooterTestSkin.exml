@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<e:Skin class="ScrollerPullRefreshFooterTestSkin" width="400" height="40" currentState="idle" xmlns:e="http://ns.egret.com/eui" states="idle,ready,working,success,failed,empty" >
+	<e:Label text="" horizontalCenter="0" verticalCenter="0" text.idle="上拉加载" text.ready="释放加载" text.working="加载中" text.success="加载成功" text.failed="加载失败" text.empty="没有更多"/>
+</e:Skin>

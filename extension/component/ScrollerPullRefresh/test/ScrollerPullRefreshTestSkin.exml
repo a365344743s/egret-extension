@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<e:Skin class="ScrollerPullRefreshTestSkin" width="1440" height="2560" xmlns:e="http://ns.egret.com/eui" xmlns:ns1="*" xmlns:w="http://ns.egret.com/wing">
+	<e:Rect width="400" height="700" horizontalCenter="0" verticalCenter="0" fillColor="0xff1616"/>
+	<ns1:ScrollerPullRefresh id="spdTest" width="400" height="700" horizontalCenter="0" verticalCenter="0" scrollPolicyH="off" scrollPolicyV="on">
+		<e:List id="lstTest" itemRenderer="ScrollerPullRefreshTestItem"/>
+	</ns1:ScrollerPullRefresh>
+</e:Skin>

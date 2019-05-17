@@ -94,7 +94,7 @@ proto文件合并插件，目前我们项目采用的是动态加载proto文件�
 # - 扩展组件
 
 ## 1. ScrollPullRefresh
-下拉刷新，下拉加载组件
+下拉刷新，上拉加载组件
 
 ## 2. CustomMovieClip
 帧动画组件
