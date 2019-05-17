@@ -1,5 +1,5 @@
 # - egret-plugin
-白鹭第三方库和构建插件
+白鹭扩展库，包含第三方库、构建插件、扩展组件
 
 白鹭自己提供了一些[第三方库](https://github.com/egret-labs/egret-game-library "第三方库")，但是不够用，所以有了这个仓库，另外增加了一些构建插件
 
@@ -90,6 +90,30 @@ proto文件合并插件，目前我们项目采用的是动态加载proto文件�
 
 ## 6. ResSplitPlugin
 资源分包插件，将不同资源按照分包规则(ResSplitConfig.ts)，打成不同的zip包，并提供自动版本号管理功能
+
+# - 扩展组件
+
+## 1. ScrollPullRefresh
+下拉刷新，下拉加载组件
+
+## 2. CustomMovieClip
+帧动画组件
+
+egret.MovieClip接受的是一个图集，但是图集在不同的硬件上支持的最大尺寸不一样，这样当图集尺寸超过设备支持的最大尺寸后会出现异常，CustomMovieClip接受一组图片，每帧对应一张图
+
+## 3. CycleScroller
+循环滚动翻页组件，通常用于广告位展示
+
+## 4. ImageLoader
+支持裁剪的图片加载组件，通常用于玩家头像，活动图片等需要从网络下载图片显示的地方
+
+## 5. RichText
+富文本组件
+
+## 6. SuffixLabel
+限定长度文本裁剪组件，通常用于昵称、介绍等显示不完文本需要在最后加...显示的地方
+
+
 
 # - 用法
 
