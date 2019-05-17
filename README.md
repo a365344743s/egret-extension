@@ -1,4 +1,4 @@
-# - egret-plugin
+# - egret-extension
 白鹭扩展库，包含第三方库、构建插件、扩展
 
 白鹭自己提供了一些[第三方库](https://github.com/egret-labs/egret-game-library "第三方库")，这里是一些补充，另外增加了一些构建插件和扩展
