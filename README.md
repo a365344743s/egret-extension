@@ -20,6 +20,9 @@ ts库
 ## extension
 扩展
 
+## fixed
+引擎bug修复
+
 # - 库
 
 ## 1. clipboard-polyfill
@@ -124,6 +127,13 @@ proto文件合并插件，目前我们项目采用的是动态加载proto文件�
 
 ## 9. Observable
 通用观察者模式
+
+# - 引擎bug修复
+## 1. WebLifeCycleHandlerFixed.ts
+fixed 在ios12.2及以上浏览器中 点击软键盘的done/完成 按钮 会引发window发送blur事件，造成引擎暂停
+
+## 2. Html5CapatibilityFixed.ts
+fixed 在iOS safari浏览器中，前后台切换有几率造成webkitAudioContext状态切换为interrupted，之后音频播放无效
 
 # - 用法
 
