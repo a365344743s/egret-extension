@@ -35,9 +35,12 @@ namespace ScrollerPullRefresh {
 	}
 }
 
-class ScrollerPullRefresh extends eui.Scroller {
+class ScrollerPullRefresh extends eui.Scroller implements IClear {
 	public constructor() {
 		super();
+
+		this.initializeClearValues();
+
 		let values = this.$Scroller;
 		values[ScrollerPullRefresh.Keys.touchBegin] = false;
 		values[ScrollerPullRefresh.Keys.footerEmpty] = false;
@@ -50,6 +53,23 @@ class ScrollerPullRefresh extends eui.Scroller {
 		this._machine = new StateMachine(this);
 	}
 
+	private initializeClearValues(): void {
+		this._valid = true;
+	}
+
+	public clear(): void {
+		this.stopAnimation();
+		this.clearItems();
+		if (!this._valid) {
+			throw new Error("Call clear on an invalid object!");
+		}
+		this._valid = false;
+	}
+
+	public get isValid(): boolean {
+		return this._valid;
+	}
+	
 	public init(object: {
 		header: ScrollerPullRefreshHeader,
 		footer: ScrollerPullRefreshFooter,
@@ -68,12 +88,18 @@ class ScrollerPullRefresh extends eui.Scroller {
 		this.startWork();
 	}
 
-	public setData(value: any[]): void {
+	public setData(value: any[], empty: boolean): void {
+		this.clearItems();
 		(this.viewport as eui.DataGroup).dataProvider = new eui.ArrayCollection(value);
 		this.validateNow();
-		let viewport = this.viewport;
-		let uiValues = viewport.$UIComponent;
-		this.$footer.y = Math.min(viewport.contentHeight - viewport.scrollV, uiValues[eui.sys.UIKeys.height]);
+		let values = this.$Scroller;
+		this.updateFooterPosition();
+		values[ScrollerPullRefresh.Keys.footerEmpty] = empty;
+		if (empty) {
+			this.$footer.state = ScrollerPullRefresh.FooterState.EMPTY;
+		} else {
+			this.$footer.state = ScrollerPullRefresh.FooterState.IDLE;
+		}
 	}
 
 	public setDelayTime(headerDelayTime: number, footerDelayTime: number): void {
@@ -82,13 +108,19 @@ class ScrollerPullRefresh extends eui.Scroller {
 	}
 
 	public reset(): void {
-		this.setData(null);
+		this.setData(null, false);
 		let values = this.$Scroller;
 		let scroller = values[ScrollerPullRefresh.Keys.touchScrollV];
 		values[ScrollerPullRefresh.Keys.footerEmpty] = false;
 		this._machine.changeState(new ScrollerPullRefreshStateIDLE());
 		this.stopAnimation();
 		this.viewport.scrollV = 0;
+	}
+
+	public updateFooterPosition(): void {
+		let viewport = this.viewport;
+		let uiValues = viewport.$UIComponent;
+		this.$footer.y = Math.min(viewport.contentHeight - viewport.scrollV, uiValues[eui.sys.UIKeys.height]);
 	}
 
 	protected updateDisplayList(unscaledWidth:number, unscaledHeight:number):void {
@@ -110,7 +142,7 @@ class ScrollerPullRefresh extends eui.Scroller {
 	private set footer(value: ScrollerPullRefreshFooter) {
 		this.$footer = value;
 		this.$Scroller[ScrollerPullRefresh.Keys.touchScrollV].bottom = this.$footer.height;
-		this.$footer.y = this.height;
+		this.updateFooterPosition();
 		this.$footer.mask = this._mskFooter;
 		this.addChild(this.$footer);
 	}
@@ -134,6 +166,16 @@ class ScrollerPullRefresh extends eui.Scroller {
 		(this._machine.getCurrentState() as ScrollerPullRefreshStateBase).onScrollChanged(evt);
 	}
 
+	private clearItems(): void {
+		let viewport = this.viewport as eui.DataGroup;
+		if (viewport.numElements > 0) {
+			for(let i = 0, len = viewport.numChildren;i < len;i++) {
+				(viewport.getChildAt(i) as ItemRenderBase).clear();
+			}
+			viewport.dataProvider = null;
+		}
+	}
+
 	public $header: ScrollerPullRefreshHeader;
 	public $footer: ScrollerPullRefreshFooter;
 	public $headerWorkHandler: (object: {
@@ -150,6 +192,8 @@ class ScrollerPullRefresh extends eui.Scroller {
 	private _mskHeader: eui.Rect;
 	private _mskFooter: eui.Rect;
 	private _machine: StateMachine;
+
+	private _valid: boolean;
 }
 
 ScrollerPullRefresh.prototype['onTouchBegin'] = function(event: egret.TouchEvent): void {
@@ -177,7 +221,7 @@ class ScrollerPullRefreshStateBase extends StateBase {
 		let viewport: eui.IViewport = target.viewport;
 		let uiValues = viewport.$UIComponent;
 		target.$header.y = Math.max(-(target.$header.height + viewport.scrollV), -target.$header.height);
-		target.$footer.y = Math.min(viewport.contentHeight - viewport.scrollV, uiValues[eui.sys.UIKeys.height]);
+		target.updateFooterPosition();
 		target.$header.onScrollChanged();
 		target.$footer.onScrollChanged();
 	}
@@ -287,7 +331,7 @@ class ScrollerPullRefreshStateHeaderWorking extends ScrollerPullRefreshStateBase
 					((viewport as eui.DataGroup).dataProvider as eui.ArrayCollection).replaceAll(data);
 					this.machine.changeState(new ScrollerPullRefreshStateHeaderWorkSucc());
 					target.validateNow();
-					target.$footer.y = Math.min(viewport.contentHeight - viewport.scrollV, uiValues[eui.sys.UIKeys.height]);
+					target.updateFooterPosition();
 					if (!scroller.isPlaying()) {
 						let maxV = Math.max(0, viewport.contentHeight - uiValues[eui.sys.UIKeys.height] + target.$footer.height);
 						if (viewport.scrollV > maxV) {
@@ -412,10 +456,8 @@ class ScrollerPullRefreshStateFooterWorking extends ScrollerPullRefreshStateBase
 						collection.addItem(data[i]);
 					}
 					this.machine.changeState(new ScrollerPullRefreshStateFooterWorkSucc());
-					let scroller = values[ScrollerPullRefresh.Keys.touchScrollV];
-					let uiValues = viewport.$UIComponent;
 					target.validateNow();
-					target.$footer.y = Math.min(viewport.contentHeight - viewport.scrollV, uiValues[eui.sys.UIKeys.height]);
+					target.updateFooterPosition();
 				}
 			},
 			failed: () => {

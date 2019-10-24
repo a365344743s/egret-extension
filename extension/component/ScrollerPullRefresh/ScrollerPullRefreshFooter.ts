@@ -30,8 +30,7 @@ class ScrollerPullRefreshFooter extends ComponentBase {
 			case ScrollerPullRefresh.FooterState.EMPTY:
 				return 'empty';
 			default:
-				egret.error('Wrong ScrollerPullRefresh.FooterState:', this._state);
-				return 'error';
+				throw new Error('Wrong ScrollerPullRefresh.FooterState:' + this._state);
 		}
 	}
 

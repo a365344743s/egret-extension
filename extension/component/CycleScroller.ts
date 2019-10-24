@@ -7,17 +7,29 @@ interface ICycleScrollerItem extends IFreeze {
 	sourceIndex: number;			//未归一化的数据源索引
 	sourceIndexNormalize: number;	//归一化数据源索引
 	data: any;						//数据源中对应的数据
+	clear(): void;
+	readonly isValid: boolean;
 }
 
 interface ICycleIndicator {
 	indexNormalize: number;	//归一化数据源索引
 }
 
-class CycleScroller extends eui.Scroller {
+class CycleScroller extends eui.Scroller implements IClear {
 	public constructor() {
 		super();
-
+		this.initializeClearValues();
 		let that = this;
+		let start = function(touchPoint:number):void {
+            this.started = true;
+			this.startSourceIndex = ((that.viewport as eui.Group).getElementAt(that.getCurrentItemIndex()) as any as ICycleScrollerItem).sourceIndex;
+            this.velocity = 0;
+            this.previousVelocity.length = 0;
+            this.previousTime = egret.getTimer();
+            this.previousPosition = this.currentPosition = touchPoint;
+            this.offsetPoint = touchPoint;
+            egret.startTick(this.onTick, this);
+        };
 		let finish = function(currentScrollPos:number, maxScrollPos:number): void {
 			egret.stopTick(this.onTick, this);
             this.started = false;
@@ -37,12 +49,20 @@ class CycleScroller extends eui.Scroller {
             let posTo = 0;
 			//计算当前位置index
 			let idx = that.getCurrentItemIndex();
-			//如果拖动速度大于阈值，使用惯性移动，否则使用就近移动
-            if (absPixelsPerMS > TouchScrollerPullRefresh.MINIMUM_VELOCITY) {
+			//如果拖动没有造成页面切换并且拖动速度大于阈值，使用惯性移动，否则使用就近移动
+            if (this.startSourceIndex === ((that.viewport as eui.Group).getElementAt(idx) as any as ICycleScrollerItem).sourceIndex && absPixelsPerMS > TouchScrollerPullRefresh.MINIMUM_VELOCITY) {
 				if (pixelsPerMS < 0) {
-					this.scrollToItemIndex(idx + 1);
+					if (idx > this.startIndex) {
+						this.scrollToItemIndex(idx);
+					} else {
+						this.scrollToItemIndex(idx + 1);
+					}
 				} else {
-					this.scrollToItemIndex(idx - 1);
+					if (idx < this.startIndex) {
+						this.scrollToItemIndex(idx);
+					} else {
+						this.scrollToItemIndex(idx - 1);
+					}
 				}
 			} else {
 				this.scrollToItemIndex(idx);
@@ -73,27 +93,61 @@ class CycleScroller extends eui.Scroller {
 			this.endFunction.call(this.target);
         };
 		let touchScrollH = this.$Scroller[ScrollerPullRefresh.Keys.touchScrollH];
+		touchScrollH["start"] = start;
 		touchScrollH["finish"] = finish;
 		touchScrollH["scrollToItemIndex"] = scrollToItemIndex;
 		touchScrollH["throwTo"] = throwTo;
 		touchScrollH["finishScrolling"] = finishScrolling;
 		touchScrollH.animation.endFunction = finishScrolling;
 		let touchScrollV = this.$Scroller[ScrollerPullRefresh.Keys.touchScrollV];
+		touchScrollV["start"] = start;
 		touchScrollV["finish"] = finish;
 		touchScrollV["scrollToItemIndex"] = scrollToItemIndex;
 		touchScrollV["throwTo"] = throwTo;
 		touchScrollV["finishScrolling"] = finishScrolling;
 		touchScrollV.animation.endFunction = finishScrolling;
 	}
+	
+	private initializeClearValues(): void {
+		this._valid = true;
+	}
+
+	public clear(): void {
+		this.stopAutoScroll();
+		this.clearItems();
+		if (!this._valid) {
+			throw new Error("Call clear on an invalid object!");
+		}
+		this._valid = false;
+	}
+
+	private clearItems(): void {
+		let grp = this.viewport as eui.Group;
+		for(let i = 0, len = grp.numChildren;i < len;i++) {
+			(grp.getChildAt(i) as any as ICycleScrollerItem).clear();
+		}
+		grp.removeChildren();
+		this._itemPool.forEach(element => {
+			element.clear();
+		});
+		this._itemPool.length = 0;
+	}
+
+	public get isValid(): boolean {
+		return this._valid;
+	}
+
+	private _valid: boolean;
 
 	/**
-	 * @param value.template {any} 继承自eui.Component并实现ICycleScrollerItem的class
-	 * @param value.itemSize 每一个条目的尺寸
-	 * @param value.gap {number} 条目间距
-	 * @param value.source {any[]} 数据源
-	 * @param value.direction {CycleScrollerDirection} 滚动方向
-	 * @param value.autoScrollTime {number} 自动切换间隔时间
-	 * @param value.indicator {ICycleIndicator} 当前条目索引指示器
+	 * @param {any} value.template 继承自eui.Component并实现ICycleScrollerItem的class
+	 * @param {Object} value.itemSize 每一个条目的尺寸
+	 * @param {number} value.gap 条目间距
+	 * @param {any[]} value.source 数据源
+	 * @param {CycleScrollerDirection} value.direction 滚动方向
+	 * @param {number} value.autoScrollTime 自动切换间隔时间
+	 * @param {ICycleIndicator} value.indicator 当前条目索引指示器
+	 * @param {Function} itemTapCallback 条目点击回调
 	 */
 	public set params(value: {
 		template: any,
@@ -105,8 +159,10 @@ class CycleScroller extends eui.Scroller {
 		source: any[],
 		direction: CycleScrollerDirection,
 		autoScrollTime: number,
-		indicator?: ICycleIndicator
+		indicator?: ICycleIndicator,
+		itemTapCallback?: (index: number) => void
 	}) {
+		this.clearItems();
 		this._params = value;
 		switch(value.direction) {
 			case CycleScrollerDirection.HORIZONTAL:
@@ -198,8 +254,6 @@ class CycleScroller extends eui.Scroller {
 	/** 创建初始条目 */
 	private initItems():void {
 		let grp = this.viewport as eui.Group;
-		grp.removeChildren();
-
 		let params = this._params;
 		let layout: eui.LinearLayoutBase;
 		let step: number;
@@ -352,6 +406,7 @@ class CycleScroller extends eui.Scroller {
 		it.sourceIndex = sourceIndex;
 		it.sourceIndexNormalize = this.getNormalizeIndex(sourceIndex);
 		it.data = this._params.source[it.sourceIndexNormalize];
+		((it as any) as egret.IEventDispatcher).addEventListener(egret.TouchEvent.TOUCH_TAP, this.onItemTapped, this);
 		return it;
 	}
 
@@ -359,6 +414,13 @@ class CycleScroller extends eui.Scroller {
 	private releaseItem(value: ICycleScrollerItem): void {
 		value.freeze();
 		this._itemPool.push(value);
+	}
+
+	private onItemTapped(evt: egret.TouchEvent): void {
+		let it = evt.currentTarget as ICycleScrollerItem;
+		if (this._params.itemTapCallback) {
+			this._params.itemTapCallback(it.sourceIndexNormalize);
+		}
 	}
 
 	private _params: {
@@ -372,6 +434,7 @@ class CycleScroller extends eui.Scroller {
 		direction: CycleScrollerDirection,
 		autoScrollTime: number,
 		indicator?: ICycleIndicator
+		itemTapCallback?: (index: number) => void
 	};
 	private _showNum: number;
 	private _posInit: number;
@@ -415,7 +478,7 @@ CycleScroller.prototype['horizontalUpdateHandler'] = function(scrollPos: number)
 CycleScroller.prototype['verticalUpdateHandler'] = function(scrollPos: number): void {
 	let params = this._params;
 	const viewport = this.$Scroller[ScrollerPullRefresh.Keys.viewport] as eui.Group;
-	let num = scrollPos > this._posInit ? Math.floor((scrollPos - this._posInit) / (params.itemSize.width + params.gap)) : Math.ceil((scrollPos - this._posInit) / (params.itemSize.width + params.gap));
+	let num = scrollPos > this._posInit ? Math.floor((scrollPos - this._posInit) / (params.itemSize.height + params.gap)) : Math.ceil((scrollPos - this._posInit) / (params.itemSize.height + params.gap));
 	let numAbs = Math.abs(num);
 	if (numAbs > 0) {
 		let touchScrollV = this.$Scroller[ScrollerPullRefresh.Keys.touchScrollV];
@@ -430,7 +493,7 @@ CycleScroller.prototype['verticalUpdateHandler'] = function(scrollPos: number): 
 				this.unshiftItem((viewport.getElementAt(0) as any as ICycleScrollerItem).sourceIndex - 1);
 			}
 		}
-		let delta = num * (params.itemSize.width + params.gap);
+		let delta = num * (params.itemSize.height + params.gap);
 		scrollPos -= delta;
 		touchScrollV.animation.currentValue = scrollPos;
 		touchScrollV.currentScrollPos = scrollPos;
@@ -439,7 +502,7 @@ CycleScroller.prototype['verticalUpdateHandler'] = function(scrollPos: number): 
 		touchScrollV.animation.to -= delta;
 	} else {
 		if (viewport) {
-			viewport.scrollH = scrollPos;
+			viewport.scrollV = scrollPos;
 		}
 		this.dispatchEventWith(egret.Event.CHANGE);
 	}

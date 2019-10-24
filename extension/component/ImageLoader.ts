@@ -3,6 +3,75 @@ enum ImageLoaderMode {
 	NO_BORDER
 }
 
+class ImageLoaderCache {
+	public static getInstance(): ImageLoaderCache {
+		return ImageLoaderCache._instance || (ImageLoaderCache._instance = new ImageLoaderCache());
+	}
+
+	public getItem(url: string): egret.BitmapData {
+		let item = this._cache[url];
+		if (item) {
+			return item.data;
+		} else {
+			return null;
+		}
+	}
+
+	public setItem(url: string, data: egret.BitmapData): void {
+		let size = data.width * data.height * 4;
+		let item = {
+			url,
+			data,
+			size
+		};
+		let old = this._cache[url];
+		this._items.push(item);
+		this._cache[url] = item;
+		this._currentSize += size;
+		if (old) {
+			for(let i = 0, len = this._items.length;i < len;i++) {
+				if (this._items[i] === old) {
+					this._items.splice(i, 1);
+					break;
+				}
+			}
+			this._currentSize -= old.size;
+		}
+		while(this._currentSize > this._maxSize) {
+			let tmp = this._items.shift();
+			delete this._cache[tmp.url];
+			this._currentSize -= tmp.size;
+		}
+	}
+
+	public clearCache(): void {
+		this._cache = {};
+		this._items.length = 0;
+		this._currentSize = 0;
+	}
+
+	private constructor() {
+	}
+
+	private static _instance: ImageLoaderCache;
+
+	private _cache: {
+		[url: string]: {
+			url: string,
+			data: egret.BitmapData,
+			size: number
+		}
+	} = {};
+	private _items: {
+		url: string,
+		data: egret.BitmapData,
+		size: number
+	}[] = [];
+
+	private _maxSize = 20 * 1024 * 1024;	//最大缓存容量
+	private _currentSize = 0;				//当前缓存容量
+}
+
 class ImageLoader extends eui.Component {
 	public constructor() {
 		super();
@@ -28,78 +97,46 @@ class ImageLoader extends eui.Component {
 		this._texUrl = null;
 		this._texStencil = null;
 		if (value) {
+			this._texDefault = RES.getRes(value.def);
 			if (value.stencil) {
-				let stencil = value.stencil;
-				eui.getAssets(stencil, (tex: any) => {
-					if (!this._data || stencil !== this._data.stencil) {
-						return;
-					}
-					if (!egret.is(tex, "egret.Texture")) {
-						return;
-					}
-					this.setTextureStencil(tex);
-				}, this);
+				this._texStencil = RES.getRes(value.stencil);
+			} else {
+				this._texStencil = this._texDefault;
 			}
-			let def = value.def;
-			eui.getAssets(def, (tex: any) => {
-				if (!this._data || def !== this._data.def) {
-					return;
-				}
-				if (!egret.is(tex, "egret.Texture")) {
-					return;
-				}
-				this.setTextureDefault(tex);
-				if (!this._data.stencil) {
-					this.setTextureStencil(tex);
-				}
-			}, this);
 			if (value.url) {
 				let url = value.url;
 				if (CommonUtil.isLegalHttpUrl(url)) {
-					let loader:egret.ImageLoader = new egret.ImageLoader();
-					loader.crossOrigin = 'anonymous';
-					loader.once(egret.Event.COMPLETE, (evt: egret.Event) => {
-						if (!this._data || url !== this._data.url) {
-							return;
-						}
+					let data = ImageLoaderCache.getInstance().getItem(url);
+					if (data) {
 						let tex = new egret.Texture();
-						tex.bitmapData = loader.data;
-						this.setTextureUrl(tex)
-					}, this);
-					loader.load(url);
+						tex.bitmapData = data;
+						this._texUrl = tex;
+					} else {
+						let loader:egret.ImageLoader = new egret.ImageLoader();
+						loader.crossOrigin = 'anonymous';
+						loader.once(egret.Event.COMPLETE, (evt: egret.Event) => {
+							ImageLoaderCache.getInstance().setItem(url, loader.data);
+							if (!this._data || url !== this._data.url) {
+								return;
+							}
+							let tex = new egret.Texture();
+							tex.bitmapData = loader.data;
+							this._texUrl = tex;
+							this.checkUpdateImage();
+						}, this);
+						loader.load(url);
+					}
 				} else {
-					eui.getAssets(url, (tex: any) => {
-						if (!this._data || url !== this._data.url) {
-							return;
-						}
-						if (!egret.is(tex, "egret.Texture")) {
-							return;
-						}
-						this.setTextureUrl(tex);
-					}, this);
+					this._texUrl = RES.getRes(url);
 				}
 			}
+			this.checkUpdateImage();
 		}
 	}
 
 	protected childrenCreated(): void {
 		this.imgAvatar.mask = this.imgMask;
 		super.childrenCreated();
-	}
-
-	private setTextureStencil(tex: egret.Texture): void {
-		this._texStencil = tex;
-		this.checkUpdateImage();
-	}
-
-	private setTextureDefault(tex: egret.Texture): void {
-		this._texDefault = tex;
-		this.checkUpdateImage();
-	}
-
-	private setTextureUrl(tex: egret.Texture): void {
-		this._texUrl = tex;
-		this.checkUpdateImage();
 	}
 
 	private checkUpdateImage(): void {

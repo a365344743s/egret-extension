@@ -41,19 +41,34 @@ class SuffixLabel extends eui.Component {
 		}
 	}
 
-	public set left(value: any) {
-		this._invalidateSuffix = true;
-		egret.superSetter(SuffixLabel, this, 'left', value);
+	public set stroke(value: number) {
+		this._stroke = value;
+		if (this.labContent) {
+			this.labContent.stroke = value;
+		}
+		if (this.labSuffix) {
+			this.labSuffix.stroke = value;
+		}
 	}
 
-	public set right(value: any) {
-		this._invalidateSuffix = true;
-		egret.superSetter(SuffixLabel, this, 'right', value);
+	public set strokeColor(value: number) {
+		this._strokeColor = value;
+		if (this.labContent) {
+			this.labContent.strokeColor = value;
+		}
+		if (this.labSuffix) {
+			this.labSuffix.strokeColor = value;
+		}
 	}
 
 	$setWidth(value: number): void {
-		this._invalidateSuffix = true;
 		super.$setWidth(value);
+		this.invalidateSuffix();
+	}
+
+	public set maxWidth(value: number) {
+		egret.superSetter(SuffixLabel, this, 'maxWidth', value);
+		this.invalidateSuffix();
 	}
 
 	protected partAdded(partName: string, instance: any): void {
@@ -62,12 +77,15 @@ class SuffixLabel extends eui.Component {
 			this.labContent.height = this._size;
 			this.labContent.textColor = this._textColor;
 			this.labContent.text = this._text;
+			this.labContent.stroke = this._stroke;
+			this.labContent.strokeColor = this._strokeColor;
 			this.invalidateSuffix();
-		}
-		if (instance === this.labSuffix) {
+		} else if (instance === this.labSuffix) {
 			this.labSuffix.size = this._size;
 			this.labSuffix.textColor = this._textColor;
 			this.labSuffix.text = this._suffix;
+			this.labSuffix.stroke = this._stroke;
+			this.labSuffix.strokeColor = this._strokeColor;
 			this.invalidateSuffix();
 		}
 		super.partAdded(partName, instance);
@@ -79,10 +97,13 @@ class SuffixLabel extends eui.Component {
 				this.labContent.maxWidth = 100000;
 				(this.parent as eui.Component).validateNow();
 				if (this.labContent.textWidth > this.width) {
+					this.labSuffix.width = NaN;
 					this.labContent.maxWidth = this.width - this.labSuffix.width;
 					this.labSuffix.x = this.labContent.width;
 					this.labSuffix.visible = true;
 				} else {
+					this.labSuffix.x = 0;
+					this.labSuffix.width = 0;
 					this.labSuffix.visible = false;
 				}
 			}
@@ -101,6 +122,8 @@ class SuffixLabel extends eui.Component {
 
 	private _size: number = 10;
 	private _textColor: number = 0x989797;
+	private _stroke: number = 0;
+	private _strokeColor: number = 0x000000;
 	private _suffix: string = '...';
 	private _text: string = '';
 	private _invalidateSuffix: boolean = true;

@@ -28,8 +28,7 @@ class ScrollerPullRefreshHeader extends ComponentBase {
 			case ScrollerPullRefresh.HeaderState.FAILED:
 				return 'failed';
 			default:
-				egret.error('Wrong ScrollerPullRefresh.HeaderState:', this._state);
-				return 'error';
+				throw new Error('Wrong ScrollerPullRefresh.HeaderState:' + this._state);
 		}
 	}
 
