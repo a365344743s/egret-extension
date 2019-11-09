@@ -1,5 +1,9 @@
 /**
  * fixed 在safari浏览器中，前后台切换有几率造成webkitAudioContext状态切换为interrupted，之后音频播放无效
+ * 接听来电也会导致webkitAudioContext状态切换为interrupted
+ * see	https://hackernoon.com/unlocking-web-audio-the-smarter-way-8858218c0e09
+ * 		https://github.com/CreateJS/SoundJS/issues/264
+ * 		https://github.com/pavle-goloskokovic/web-audio-touch-unlock
  */
 if (egret.Capabilities.runtimeType === egret.RuntimeType.WEB && egret.Capabilities.os === "iOS") {
 	let Html5Capatibility = egret.web['Html5Capatibility'];
@@ -12,22 +16,22 @@ if (egret.Capabilities.runtimeType === egret.RuntimeType.WEB && egret.Capabiliti
 			try {
 				//防止某些chrome版本创建异常问题
 				egret.web['WebAudioDecode'].ctx = new (window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"])();
-				let ctx = egret.web['WebAudioDecode'].ctx;
-				let unlock = () => {
-					ctx.resume();    
-				};
-				ctx.onstatechange = function() {
-					if (ctx.state === "running") {
-						egret.lifecycle.stage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, unlock, this);
-						egret.lifecycle.stage.removeEventListener(egret.TouchEvent.TOUCH_END, unlock, this);
-					} else {
-						egret.lifecycle.stage.addEventListener(egret.TouchEvent.TOUCH_BEGIN, unlock, this);
-						egret.lifecycle.stage.addEventListener(egret.TouchEvent.TOUCH_END, unlock, this);
-					}
-				}
 			}
 			catch (e) {
 				canUseWebAudio = false;
+			}
+			let ctx = egret.web['WebAudioDecode'].ctx;
+			let unlock = () => {
+				ctx.resume();
+			};
+			ctx.onstatechange = function() {
+				if (ctx.state === "running") {
+					egret.lifecycle.stage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, unlock, this);
+					egret.lifecycle.stage.removeEventListener(egret.TouchEvent.TOUCH_END, unlock, this);
+				} else {
+					egret.lifecycle.stage.addEventListener(egret.TouchEvent.TOUCH_BEGIN, unlock, this);
+					egret.lifecycle.stage.addEventListener(egret.TouchEvent.TOUCH_END, unlock, this);
+				}
 			}
 		}
 		let AudioType = egret.web['AudioType'];

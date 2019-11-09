@@ -1,5 +1,6 @@
 /**
- * fixed 在ios12.2及以上浏览器中 点击软键盘的done/完成 按钮 会引发window发送blur事件，造成引擎暂停
+ * fixed 在ios12.2 safari中 点击软键盘的done/完成 按钮 会引发window发送blur事件，造成引擎暂停
+ * ios 13.1.3中 safari中 点击软键盘的done/完成 按钮 已经不会再引发window发送blur事件
  */
 if (egret.Capabilities.runtimeType === egret.RuntimeType.WEB && egret.Capabilities.os === "iOS") {
 

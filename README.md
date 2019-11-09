@@ -130,10 +130,25 @@ proto文件合并插件，目前我们项目采用的是动态加载proto文件�
 
 # - 引擎bug修复
 ## 1. WebLifeCycleHandlerFixed.ts
-fixed 在ios12.2及以上浏览器中 点击软键盘的done/完成 按钮 会引发window发送blur事件，造成引擎暂停
+fixed 在ios12.2 safari中 点击软键盘的done/完成 按钮 会引发window发送blur事件，造成引擎暂停
+(ios 13.1.3中 safari中 点击软键盘的done/完成 按钮 已经不会再引发window发送blur事件，所以这应该是safari的bug)
 
 ## 2. Html5CapatibilityFixed.ts
 fixed 在iOS safari浏览器中，前后台切换有几率造成webkitAudioContext状态切换为interrupted，之后音频播放无效
+接听来电也会导致webkitAudioContext状态切换为interrupted，然后在挂断电话后却没有恢复为running状态，导致音频无法播放
+
+## 3. JsonProcessorFixed.ts
+json解析失败需要抛出RES.ResourceManagerError,否则在ResourceLoader.prototype.loadSingleResource
+if (!error.__resource_manager_error__) {
+		throw error;
+}
+会被直接抛出不被资源管理器正确捕获并处理
+
+## 4. RadioButtonGroupFixed.ts
+修正 RadioButtonGroup.selectedValue = 0 无法正确选中 RadioButton 的 bug
+
+## 5. WebAudioSoundChannelFixed.ts
+修复safari中，接听来电时在不挂断电话情况下切回游戏，恢复背景音乐时，导致InvalidStateError错误
 
 # - 用法
 
