@@ -97,6 +97,12 @@ proto文件合并插件，目前我们项目采用的是动态加载proto文件�
 ## 6. ResSplitPlugin
 资源分包插件，将不同资源按照分包规则(ResSplitConfig.ts)，打成不同的zip包，并提供自动版本号管理功能
 
+## 7. JSCombinePlugin
+js合并插件，将多个js文件合并为一个
+
+## 8. KTXPlugin
+将png转化为etc/pvr格式纹理（需要npm安装cmd/egret-texture-generator）
+
 # - 扩展组件
 
 ## 1. ScrollPullRefresh

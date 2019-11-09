@@ -80,6 +80,21 @@ export function read(path: string, ignoreCache = false): string {
     return text;
 }
 
+/**
+ * 读取字节流文件,返回字节流，若失败，返回null.
+ * @param path 要打开的文件路径
+ */
+export function readBinary(path: string): any {
+    path = escapePath(path);
+    try {
+        var binary = FS.readFileSync(path);
+    }
+    catch (e) {
+        return null;
+    }
+    return binary;
+}
+
 export function copy(source: string, dest: string): void {
     source = escapePath(source);
     dest = escapePath(dest);

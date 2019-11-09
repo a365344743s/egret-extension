@@ -1,5 +1,5 @@
 ﻿/// <reference path="lib/types.d.ts" />
-///<reference path="../node.d.ts"/>
+
 
 
 module globals {
